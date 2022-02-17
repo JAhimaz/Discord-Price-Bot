@@ -209,7 +209,10 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 ''' 
                         for dchannel in DISCORD_CHANNELS:
                             channel = bot.get_channel(int(dchannel)) # Gets the channel to post to
-                            await channel.send(message)
+                            try:
+                                await channel.send(message)
+                            except:
+                                print(f"Error Sending Message to Channel: {channel}")
                     
                 if(blockNumber > CURRENT_BLOCK):
                     print(f"Updating Block Number to: {blockNumber}")
