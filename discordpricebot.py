@@ -85,7 +85,11 @@ TOKEN ADDR: {TOKEN_ADDR}
 TOKEN INCLUDE TAX: {INCLUDE_TAX}
 TOKEN TAX AMOUNT: {TAX_AMT}
 
+// NUMBER OF CHANNELS: {len(DISCORD_CHANNELS)}\n
+
 CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
+
+
         '''
 
         print(startupMessage)
@@ -101,6 +105,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             except:
                 logging.info("Error Getting Token Price")
                 print("Error Getting Token Price")
+                continue
             tokenPrice = tokenData['data']['price']
 
             # Get the price of BNB
@@ -109,13 +114,24 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             except:
                 logging.info("Error Getting BNB Price")
                 print("Error Getting BNB Price")
+                continue
             bnbPrice = bnbData['data']['price']
 
-            totalSupply = contract.functions.totalSupply().call() / (10 ** 9)
+            try:
+                totalSupply = contract.functions.totalSupply().call() / (10 ** 9)
+            except:
+                print("Error Getting Total Supply")
+                continue
+                
+                
 
             if(HAS_BURN):
-                burntSupply = contract.functions.balanceOf(Web3.toChecksumAddress(BURN_ADDR)).call() / (10 ** 9)
-                currentSupply = totalSupply - burntSupply
+                try:
+                    burntSupply = contract.functions.balanceOf(Web3.toChecksumAddress(BURN_ADDR)).call() / (10 ** 9)
+                    currentSupply = totalSupply - burntSupply
+                except:
+                    print("Error calculating current supply")
+                    continue
             else:
                 currentSupply = totalSupply
 
@@ -165,8 +181,14 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                         print(f"New Buy of {amountPurchasedUSD}")
 
                         marketCap = float(tokenPrice) * currentSupply
-                        walletAmount = contract.functions.balanceOf(Web3.toChecksumAddress(walletAddr)).call() / (10 ** 9)
-                        isNewBuyer = CheckHolderStatus(walletAmount, amountEGT)
+                        try:
+                            walletAmount = contract.functions.balanceOf(Web3.toChecksumAddress(walletAddr)).call() / (10 ** 9)
+                            isNewBuyer = CheckHolderStatus(walletAmount, amountEGT)
+                        except:
+                            print("Error getting Wallet Amount (Skipping)")
+                            walletAmount = 0
+                            isNewBuyer = "Error Getting Wallet Status"
+
 
                         D_SYMB = "🟩"
 
