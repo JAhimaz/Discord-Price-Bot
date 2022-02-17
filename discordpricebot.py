@@ -48,7 +48,7 @@ TOKEN_ADDR = os.getenv("TOKEN_ADDR") # TOKEN Address
 BNB_ADDR = os.getenv("BNB_ADDR") # BNB Address
 BURN_ADDR = os.getenv("BURN_ADDR")
 PANCAKESWAP_ADDR = os.getenv("PANCAKESWAP_ADDR") # PancakeSwap SWAP Address
-DISCORD_CHANNEL = os.getenv("DISCORD_CHANNEL") # Discord Channel ID to relay messages
+DISCORD_CHANNELS = json.loads(os.getenv("DISCORD_CHANNEL")) # Discord Channel ID to relay messages
 CHECKSUM_TOKEN_ADDR = Web3.toChecksumAddress(TOKEN_ADDR) # CHECKSUM address of Token (For Web3)
 TOKEN_DECIMALS = int(os.getenv("TOKEN_DECIMALS"))
 INCLUDE_TAX = False
@@ -60,9 +60,7 @@ web3 = Web3(Web3.HTTPProvider("https://bsc-dataseed.binance.org/")) # Accessing 
 
 
 async def StartScan(bot):
-    channel = bot.get_channel(int(DISCORD_CHANNEL)) # Gets the channel to post to
     # await channel.send('[{0} HAS STARTED (PYTHON)]'.format(bot.user))
-
     TOKEN_ABI_URL = f"https://api.bscscan.com/api?module=contract&action=getabi&address={TOKEN_ADDR}&apikey={API_KEY_BSC}" # Fetches the ABI from BSCScan API
     response = requests.get(TOKEN_ABI_URL).json() # Checks for a response
 
@@ -187,7 +185,9 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
 {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB}
 ''' 
-                        await channel.send(message)
+                        for dchannel in DISCORD_CHANNELS:
+                            channel = bot.get_channel(int(dchannel)) # Gets the channel to post to
+                            await channel.send(message)
                     
                 if(blockNumber > CURRENT_BLOCK):
                     print(f"Updating Block Number to: {blockNumber}")
