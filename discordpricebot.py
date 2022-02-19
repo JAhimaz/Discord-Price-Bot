@@ -15,6 +15,8 @@ import json
 from pythonpancakes import PancakeSwapAPI
 # Misc
 import asyncio
+from calculateTokenPrice import calcSell
+from getTokenABI import getTokenABI
 
 # Initialisation
 load_dotenv()
@@ -48,6 +50,8 @@ TOKEN_ADDR = os.getenv("TOKEN_ADDR") # TOKEN Address
 BNB_ADDR = os.getenv("BNB_ADDR") # BNB Address
 BURN_ADDR = os.getenv("BURN_ADDR")
 PANCAKESWAP_ADDR = os.getenv("PANCAKESWAP_ADDR") # PancakeSwap SWAP Address
+PANCAKEROUTER_ADDR = os.getenv("PANCAKEROUTER_ADDR")
+CHECKSUM_PANCAKESWAP_ADDR = Web3.toChecksumAddress(PANCAKEROUTER_ADDR)
 DISCORD_CHANNELS = json.loads(os.getenv("DISCORD_CHANNEL")) # Discord Channel ID to relay messages
 CHECKSUM_TOKEN_ADDR = Web3.toChecksumAddress(TOKEN_ADDR) # CHECKSUM address of Token (For Web3)
 TOKEN_DECIMALS = int(os.getenv("TOKEN_DECIMALS"))
@@ -61,13 +65,17 @@ web3 = Web3(Web3.HTTPProvider("https://bsc-dataseed.binance.org/")) # Accessing 
 
 async def StartScan(bot):
     # await channel.send('[{0} HAS STARTED (PYTHON)]'.format(bot.user))
-    TOKEN_ABI_URL = f"https://api.bscscan.com/api?module=contract&action=getabi&address={TOKEN_ADDR}&apikey={API_KEY_BSC}" # Fetches the ABI from BSCScan API
-    response = requests.get(TOKEN_ABI_URL).json() # Checks for a response
+    try:
+        abi = getTokenABI(TOKEN_ADDR, API_KEY_BSC)
+    except:
+        print("Failed to get ABI")
 
-    if(response): # If valid response from BSCScan
-
-        abi = json.loads(response['result']) # Store the ABI
+    if(abi): # If valid response from BSCScan
         contract = web3.eth.contract(address=CHECKSUM_TOKEN_ADDR, abi=abi) # Create the contract variable using the ABI and Token Address
+        try:
+            PANCAKESWAP_ABI = getTokenABI(PANCAKEROUTER_ADDR, API_KEY_BSC)
+        except:
+            print("Failed to get ABI")
 
         # CURRENT_BLOCK = int(os.getenv("INITIAL_BLOCK")) # Gets the Initial Block Number Manually
         CURRENT_BLOCK = web3.eth.block_number # Gets the Latest Block Number from the BSC Network
@@ -100,22 +108,34 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             print(f"Current Block: {CURRENT_BLOCK}")
         
             # Get the price of ELONGOAT
-            try:
-                tokenData = ps.tokens(TOKEN_ADDR) # Gets the Price of the Token from Pancakeswap API
-            except:
-                logging.info("Error Getting Token Price")
-                print("Error Getting Token Price")
-                continue
-            tokenPrice = tokenData['data']['price']
+            # try:
+            #     tokenData = ps.tokens(TOKEN_ADDR) # Gets the Price of the Token from Pancakeswap API
+            # except:
+            #     logging.info("Error Getting Token Price")
+            #     print("Error Getting Token Price")
+            #     continue
+            # tokenPrice = tokenData['data']['price']
 
-            # Get the price of BNB
+            # # Get the price of BNB
+            # try:
+            #     bnbData = ps.tokens(BNB_ADDR) # Gets the Price of BNB from Pancakeswap API
+            # except:
+            #     logging.info("Error Getting BNB Price")
+            #     print("Error Getting BNB Price")
+            #     continue
+            # bnbPrice = bnbData['data']['price']
             try:
-                bnbData = ps.tokens(BNB_ADDR) # Gets the Price of BNB from Pancakeswap API
+                bnbPrice = calcSell(tokenAddress=BNB_ADDR, pancakeswapABI=PANCAKESWAP_ABI, output=Web3.toChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56"))
             except:
-                logging.info("Error Getting BNB Price")
                 print("Error Getting BNB Price")
                 continue
-            bnbPrice = bnbData['data']['price']
+
+            try:
+                tokenCost = (calcSell(tokenAddress=CHECKSUM_TOKEN_ADDR, pancakeswapABI=PANCAKESWAP_ABI, output=BNB_ADDR))
+                tokenPrice = float(tokenCost / (10 ** 9)) * bnbPrice
+            except:
+                print("Error Getting Token Price")
+                continue
 
             try:
                 totalSupply = contract.functions.totalSupply().call() / (10 ** 9)
@@ -150,6 +170,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                 transfers = web3.eth.get_logs({'fromBlock': CURRENT_BLOCK, 'toBlock': 'latest', 'topics': topics, 'address': CHECKSUM_TOKEN_ADDR})
 
             # For each Transfer from the range of Blocks
+            # print(transfers[0])
 
             for transfer in transfers:
                 transferFromAddr = "0x" + str(transfer['topics'][1].hex())[-40:]
