@@ -25,8 +25,9 @@ ps = PancakeSwapAPI()
 # Logging ===========================
 def configureLogging():
     logFormatter = logging.Formatter("%(levelname)s - %(asctime)s --> %(message)s")
-
-    fileHandler = RotatingFileHandler("/home/app/logs/output.log", mode="a+", maxBytes=10*1024*1024, backupCount=3)
+    
+    fileHandler = RotatingFileHandler("logs/output.log", mode="a+", maxBytes=10*1024*1024, backupCount=3)
+    # fileHandler = RotatingFileHandler("/home/app/logs/output.log", mode="a+", maxBytes=10*1024*1024, backupCount=3)
     fileHandler.setFormatter(logFormatter)
     streamHandler = logging.StreamHandler()
     streamHandler.setFormatter(logFormatter)
@@ -36,6 +37,8 @@ def configureLogging():
     log.addHandler(streamHandler)
     log.addHandler(fileHandler)
 #  =================================
+
+configureLogging()
 
 def CheckHolderStatus(walletAmount, buyAmount):
     if(walletAmount - buyAmount < 100.00):
@@ -68,14 +71,14 @@ async def StartScan(bot):
     try:
         abi = getTokenABI(TOKEN_ADDR, API_KEY_BSC)
     except:
-        print("Failed to get ABI")
+        logging.info("Failed to get ABI")
 
     if(abi): # If valid response from BSCScan
         contract = web3.eth.contract(address=CHECKSUM_TOKEN_ADDR, abi=abi) # Create the contract variable using the ABI and Token Address
         try:
             PANCAKESWAP_ABI = getTokenABI(PANCAKEROUTER_ADDR, API_KEY_BSC)
         except:
-            print("Failed to get ABI")
+            logging.info("Failed to get ABI")
 
         # CURRENT_BLOCK = int(os.getenv("INITIAL_BLOCK")) # Gets the Initial Block Number Manually
         CURRENT_BLOCK = web3.eth.block_number # Gets the Latest Block Number from the BSC Network
@@ -100,19 +103,19 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
         '''
 
-        print(startupMessage)
+        logging.info(startupMessage)
 
         while(True):
             # checkerBlock = web3.eth.block_number
-            logging.info(f"Current Block: {CURRENT_BLOCK}") # Logs the current Block
-            print(f"Current Block: {CURRENT_BLOCK}")
+            
+            logging.info(f"Current Block: {CURRENT_BLOCK}")
         
             # Get the price of ELONGOAT
             # try:
             #     tokenData = ps.tokens(TOKEN_ADDR) # Gets the Price of the Token from Pancakeswap API
             # except:
+            #     
             #     logging.info("Error Getting Token Price")
-            #     print("Error Getting Token Price")
             #     continue
             # tokenPrice = tokenData['data']['price']
 
@@ -120,27 +123,27 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             # try:
             #     bnbData = ps.tokens(BNB_ADDR) # Gets the Price of BNB from Pancakeswap API
             # except:
+            #     
             #     logging.info("Error Getting BNB Price")
-            #     print("Error Getting BNB Price")
             #     continue
             # bnbPrice = bnbData['data']['price']
             try:
                 bnbPrice = calcSell(tokenAddress=BNB_ADDR, pancakeswapABI=PANCAKESWAP_ABI, output=Web3.toChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56"))
             except:
-                print("Error Getting BNB Price")
+                logging.info("Error Getting BNB Price")
                 continue
 
             try:
                 tokenCost = (calcSell(tokenAddress=CHECKSUM_TOKEN_ADDR, pancakeswapABI=PANCAKESWAP_ABI, output=BNB_ADDR))
                 tokenPrice = float(tokenCost / (10 ** 9)) * bnbPrice
             except:
-                print("Error Getting Token Price")
+                logging.info("Error Getting Token Price")
                 continue
 
             try:
                 totalSupply = contract.functions.totalSupply().call() / (10 ** 9)
             except:
-                print("Error Getting Total Supply")
+                logging.info("Error Getting Total Supply")
                 continue
                 
                 
@@ -150,7 +153,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                     burntSupply = contract.functions.balanceOf(Web3.toChecksumAddress(BURN_ADDR)).call() / (10 ** 9)
                     currentSupply = totalSupply - burntSupply
                 except:
-                    print("Error calculating current supply")
+                    logging.info("Error calculating current supply")
                     continue
             else:
                 currentSupply = totalSupply
@@ -166,11 +169,11 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                 transfers = web3.eth.get_logs({'fromBlock': CURRENT_BLOCK, 'toBlock': 'latest', 'topics': topics, 'address': CHECKSUM_TOKEN_ADDR})
             except ValueError:
                 CURRENT_BLOCK = web3.eth.block_number
-                print(f"Exceeded BSCScan RPC Range. Setting NEW Current Block: {CURRENT_BLOCK}")
+                logging.info(f"Exceeded BSCScan RPC Range. Setting NEW Current Block: {CURRENT_BLOCK}")
                 transfers = web3.eth.get_logs({'fromBlock': CURRENT_BLOCK, 'toBlock': 'latest', 'topics': topics, 'address': CHECKSUM_TOKEN_ADDR})
 
             # For each Transfer from the range of Blocks
-            # print(transfers[0])
+            # logging.info(transfers[0])
 
             for transfer in transfers:
                 transferFromAddr = "0x" + str(transfer['topics'][1].hex())[-40:]
@@ -181,7 +184,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                     amountPurchasedUSD = round(amountEGT * float(tokenPrice), 2) # The Amount of EGT Purchased (IN USD)
                     amountInBNB = round(float(amountPurchasedUSD) / float(bnbPrice), 4) # The Amount of EGT Purchased (IN BNB)
 
-                    # print(amountEGT)
+                    # logging.info(amountEGT)
 
                     if(not INCLUDE_TAX):
                         amountEGT = round((amountEGT/100) * (100 + TAX_AMT), 2)
@@ -192,21 +195,21 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                     # Transaction Hash to fix this if it is too prevalent.
 
                     if(blockNumber == CURRENT_BLOCK): # Skips Sending the Message if the Block is the same Block
-                        print("No Changes")
+                        logging.info("No Changes")
                         continue
                     
-                    print(f"Buy of {amountPurchasedUSD}")
+                    logging.info(f"Buy of {amountPurchasedUSD}")
 
                     if(float(amountPurchasedUSD) > float(ALERT_AMOUNT)): # Checks if the amount Purchased in USD is greater than the Alert Amount
 
-                        print(f"New Buy of {amountPurchasedUSD}")
+                        logging.info(f"New Buy of {amountPurchasedUSD}")
 
                         marketCap = float(tokenPrice) * currentSupply
                         try:
                             walletAmount = contract.functions.balanceOf(Web3.toChecksumAddress(walletAddr)).call() / (10 ** 9)
                             isNewBuyer = CheckHolderStatus(walletAmount, amountEGT)
                         except:
-                            print("Error getting Wallet Amount (Skipping)")
+                            logging.info("Error getting Wallet Amount (Skipping)")
                             walletAmount = 0
                             isNewBuyer = "Error Getting Wallet Status"
 
@@ -233,23 +236,23 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                             try:
                                 await channel.send(message)
                             except:
-                                print(f"Error Sending Message to Channel: {channel}")
+                                logging.info(f"Error Sending Message to Channel: {channel}")
                     
                 if(blockNumber > CURRENT_BLOCK):
-                    print(f"Updating Block Number to: {blockNumber}")
+                    logging.info(f"Updating Block Number to: {blockNumber}")
                     CURRENT_BLOCK = blockNumber
 
             await asyncio.sleep(5)
 
     else:
+        
         logging.info("[Failed to Connect to Web3 Services]")
-        print("[Failed to Connect to Web3 Services]")
 
 
 class MyClient(discord.Client):
     async def on_ready(self):
+        
         logging.info('[{0} HAS STARTED]'.format(self.user))
-        print('[{0} HAS STARTED]'.format(self.user))
         await StartScan(self)
 
 client = MyClient()
