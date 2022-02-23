@@ -109,24 +109,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             # checkerBlock = web3.eth.block_number
             
             logging.info(f"Current Block: {CURRENT_BLOCK}")
-        
-            # Get the price of ELONGOAT
-            # try:
-            #     tokenData = ps.tokens(TOKEN_ADDR) # Gets the Price of the Token from Pancakeswap API
-            # except:
-            #     
-            #     logging.info("Error Getting Token Price")
-            #     continue
-            # tokenPrice = tokenData['data']['price']
-
-            # # Get the price of BNB
-            # try:
-            #     bnbData = ps.tokens(BNB_ADDR) # Gets the Price of BNB from Pancakeswap API
-            # except:
-            #     
-            #     logging.info("Error Getting BNB Price")
-            #     continue
-            # bnbPrice = bnbData['data']['price']
+            
             try:
                 bnbPrice = calcSell(tokenAddress=BNB_ADDR, pancakeswapABI=PANCAKESWAP_ABI, output=Web3.toChecksumAddress("0xe9e7cea3dedca5984780bafc599bd69add087d56"))
             except:
@@ -167,7 +150,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
             topics = ["0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"]
             try:
                 transfers = web3.eth.get_logs({'fromBlock': CURRENT_BLOCK, 'toBlock': 'latest', 'topics': topics, 'address': CHECKSUM_TOKEN_ADDR})
-            except ValueError:
+            except:
                 CURRENT_BLOCK = web3.eth.block_number
                 logging.info(f"Exceeded BSCScan RPC Range. Setting NEW Current Block: {CURRENT_BLOCK}")
                 transfers = web3.eth.get_logs({'fromBlock': CURRENT_BLOCK, 'toBlock': 'latest', 'topics': topics, 'address': CHECKSUM_TOKEN_ADDR})
