@@ -48,6 +48,7 @@ def CheckHolderStatus(walletAmount, buyAmount):
 
 
 # Variable Declaration
+PROVIDER = os.getenv("PROVIDER")
 API_KEY_BSC = os.getenv('API_KEY_BSC') # API Key for BSC (Used for ABI)
 TOKEN_ADDR = os.getenv("TOKEN_ADDR") # TOKEN Address
 BNB_ADDR = os.getenv("BNB_ADDR") # BNB Address
@@ -62,12 +63,11 @@ INCLUDE_TAX = False
 TAX_AMT = float(os.getenv("TAX_AMT"))
 HAS_BURN = True
 
-web3 = Web3(Web3.HTTPProvider("https://bsc-dataseed.binance.org/")) # Accessing the mainnet of BSC
+web3 = Web3(Web3.HTTPProvider(PROVIDER)) # Accessing the mainnet of BSC
 # web3 = Web3(Web3.WebsocketProvider("wss://bsc-ws-node.nariox.org:443")) # Accessing the mainnet of BSC
 
 
 async def StartScan(bot):
-    # await channel.send('[{0} HAS STARTED (PYTHON)]'.format(bot.user))
     try:
         abi = getTokenABI(TOKEN_ADDR, API_KEY_BSC)
     except:
@@ -96,8 +96,6 @@ TOKEN ADDR: {TOKEN_ADDR}
 TOKEN INCLUDE TAX: {INCLUDE_TAX}
 TOKEN TAX AMOUNT: {TAX_AMT}
 
-// NUMBER OF CHANNELS: {len(DISCORD_CHANNELS)}\n
-
 CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
 
@@ -107,7 +105,6 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
         while(True):
             # checkerBlock = web3.eth.block_number
-            
             logging.info(f"Current Block: {CURRENT_BLOCK}")
             
             try:
@@ -197,10 +194,15 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                             isNewBuyer = "Error Getting Wallet Status"
 
 
-                        D_SYMB = "🟩"
+                        D_SYMB = "<a:buyscroll:942293209223151646>"
+                        #D_SYMB = '<a:blackegtscroll:942291584664358943>';
+                        #D_SYMB = '<a:buyscroll:942293209223151646>';
+                        #D_SYMB = '<a:blueegtscroll:942291585540960326>';
+                        #D_SYMB = '<a:egtscrollright:942289597382139904>';
+                        #D_SYMB = '🟩';
 
                         message = f'''
-⸻ **[ NEW BUY FOR {TOKEN_NAME} ]** ⸻
+⸻ **[ NEW BUY FOR {TOKEN_NAME} (BSC) ]** ⸻
 {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB}
 
 **{TOKEN_SYMBOL} BOUGHT**: {amountEGT:,} **{TOKEN_SYMBOL}**
@@ -214,12 +216,11 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
 {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB}
 ''' 
-                        for dchannel in DISCORD_CHANNELS:
-                            channel = bot.get_channel(int(dchannel)) # Gets the channel to post to
-                            try:
-                                await channel.send(message)
-                            except:
-                                logging.info(f"Error Sending Message to Channel: {channel}")
+                        channel = bot.get_channel(int(DISCORD_CHANNELS)) # Gets the channel to post to
+                        try:
+                            await channel.send(message)
+                        except:
+                            logging.info(f"Error Sending Message to Channel: {channel}")
                     
                 if(blockNumber > CURRENT_BLOCK):
                     logging.info(f"Updating Block Number to: {blockNumber}")
