@@ -194,8 +194,8 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                             isNewBuyer = "Error Getting Wallet Status"
 
 
-                        D_SYMB = "<a:buyscroll:942293209223151646>"
-                        #D_SYMB = '<a:blackegtscroll:942291584664358943>';
+                        # D_SYMB = "<a:buyscroll:942293209223151646>"
+                        D_SYMB = '<a:blackegtscroll:942291584664358943>';
                         #D_SYMB = '<a:buyscroll:942293209223151646>';
                         #D_SYMB = '<a:blueegtscroll:942291585540960326>';
                         #D_SYMB = '<a:egtscrollright:942289597382139904>';
@@ -203,7 +203,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 
                         message = f'''
 ⸻ **[ NEW BUY FOR {TOKEN_NAME} (BSC) ]** ⸻
-{D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB}
+{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}
 
 **{TOKEN_SYMBOL} BOUGHT**: {amountEGT:,} **{TOKEN_SYMBOL}**
 **FOR**: {amountInBNB} **BNB** (${amountPurchasedUSD:,})
@@ -214,7 +214,7 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
 **Buyer ({isNewBuyer})**:
 `{walletAddr}`
 
-{D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB} {D_SYMB}
+{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}{D_SYMB}
 ''' 
                         channel = bot.get_channel(int(DISCORD_CHANNELS)) # Gets the channel to post to
                         try:
