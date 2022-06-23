@@ -7,6 +7,7 @@ import os
 # Logging
 import logging
 from logging.handlers import RotatingFileHandler
+import hashlib
 # Web3 & Token related
 from web3 import Web3
 from web3.logs import DISCARD
@@ -66,8 +67,9 @@ HAS_BURN = True
 web3 = Web3(Web3.HTTPProvider(PROVIDER)) # Accessing the mainnet of BSC
 # web3 = Web3(Web3.WebsocketProvider("wss://bsc-ws-node.nariox.org:443")) # Accessing the mainnet of BSC
 
-
 async def StartScan(bot):
+    lastTransfers = []
+
     try:
         abi = getTokenABI(TOKEN_ADDR, API_KEY_BSC)
     except:
@@ -174,9 +176,13 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                     # Possibility to change as sometimes a new transaction can be written on the same block but not pulled up. Might change to check the last
                     # Transaction Hash to fix this if it is too prevalent.
 
-                    if(blockNumber == CURRENT_BLOCK): # Skips Sending the Message if the Block is the same Block
-                        logging.info("No Changes")
+                    if(transfers == lastTransfers):
+                        logging.info("Skipping Transfers")
                         continue
+
+                    # if(blockNumber == CURRENT_BLOCK): # Skips Sending the Message if the Block is the same Block
+                    #     logging.info("No Changes")
+                    #     continue
                     
                     logging.info(f"Buy of {amountPurchasedUSD}")
 
@@ -222,10 +228,13 @@ CURRENT BLOCK ON BSC: {CURRENT_BLOCK}
                         except:
                             logging.info(f"Error Sending Message to Channel: {channel}")
                     
+
                 if(blockNumber > CURRENT_BLOCK):
                     logging.info(f"Updating Block Number to: {blockNumber}")
                     CURRENT_BLOCK = blockNumber
 
+            lastTransfers = transfers
+            
             await asyncio.sleep(5)
 
     else:
